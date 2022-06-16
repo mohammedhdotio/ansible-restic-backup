@@ -1,0 +1,67 @@
+---
+- name: backup specific folder(s) using restic and mount it for easy recovery
+  hosts: servers
+  become: yes
+  ignore_errors: yes
+  tasks:
+  - name: install yum copr plugin
+    yum:
+      name: yum-plugin-copr
+      state: latest
+
+  - name: enable copr restic repo
+    command: "yum copr enable copart/restic -y"
+
+  - name: install restic and fuse package
+    yum:
+      name: [restic,fuse]
+      state: latest
+   
+  - name: unmount restic repo
+    shell: "/usr/bin/umount -l {{ restic_repo_mountpoint }} "
+
+  - name: init restic repo
+    environment: "{{ restic_env_vars }}"
+    shell: '/usr/bin/restic init || /bin/true'
+  
+  - name: backup files using restic utility
+    environment: "{{ restic_env_vars }}"
+    shell: "/usr/bin/nice -20 /usr/bin/restic backup {{ restic_exclude }}  {{ backup_source }} "
+    retries: 30
+    delay: 3
+    register: result
+    until: result is not failed
+
+  - name: unlock repo
+    environment: "{{ restic_env_vars }}"
+    shell: "/usr/bin/restic unlock"
+
+  - name: clean restic cache
+    environment: "{{ restic_env_vars }}"
+    shell: "/usr/bin/restic cache --cleanup"
+
+  - name: prune old backups
+    environment: "{{ restic_env_vars }}"
+    shell: "/usr/bin/nice -20 /usr/bin/restic forget --keep-daily {{ keep_daily }} --keep-weekly {{ keep_weekly }} --keep-monthly {{ keep_monthly }} --prune "
+    retries: 30
+    delay: 3
+    register: result
+    until: result is not failed
+  
+  - name: install daemonize package
+    package:
+      name: daemonize
+      state: latest
+
+  - name: create remote backup mount point
+    file:
+      path: '{{ restic_repo_mountpoint }}'
+      state: directory
+
+  - name: mount restic repo
+    environment: "{{ restic_env_vars }}"
+    shell: "daemonize /usr/bin/restic mount {{ restic_repo_mountpoint }}"
+    retries: 30
+    delay: 3
+    register: result
+    until: result is not failed

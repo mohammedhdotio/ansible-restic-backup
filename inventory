@@ -1,0 +1,6 @@
+[serves]
+local-backup-example ansible_host=127.0.0.2
+sftp-backup-example ansilbe_hosts=127.0.0.3
+
+[all:vars]
+ansible_user=ansible

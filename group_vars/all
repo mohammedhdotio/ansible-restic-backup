@@ -1,0 +1,11 @@
+---
+restic_env_vars:
+  RESTIC_REPOSITORY: /backup
+  RESTIC_PASSWORD: null
+  RESTIC_CACHE_DIR: '/var/cache/restic'
+restic_repo_mountpoint: /remote/backup
+restic_exclude: --exclude='/home/folder1' --exclude='/home/**/error_log'  --exclude='/home/**/tmp/sess_*'
+backup_source: /home
+keep_daily: 7
+keep_weekly: 4
+keep_yearly: 12

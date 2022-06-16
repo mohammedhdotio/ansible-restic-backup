@@ -1,0 +1,6 @@
+---
+restic_env_vars:
+  RESTIC_REPOSITORY: /backup
+  RESTIC_PASSWORD: some-radnom-encryption-key
+  RESTIC_CACHE_DIR: '/var/cache/restic'
+backup_source: /home /etc /usr /var
